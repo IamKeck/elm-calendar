@@ -6,39 +6,77 @@ import Html.Events exposing (..)
 import Task
 import Debug
 import Time
+import List
 
-type alias Model = {currentMonth : Maybe Date.Date}
+type alias Model = {currentMonth : Maybe Date.Date, startDay: Maybe Date.Date}
 type Msg = Today Date.Date | Next | Prev
 
 initial : ( Model, Cmd Msg )
-initial = {currentMonth=Nothing} ! [Task.perform Today Date.now]
+initial = {currentMonth=Nothing, startDay=Nothing} ! [Task.perform Today Date.now]
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg m =
     case msg of
         Today td ->
-            ({m|currentMonth=(toFirstDay td |> Debug.log "today" |> Just)} , Cmd.none)
+            (toFirstDay td |> updateMonth m, Cmd.none)
 
         Next ->
             case m.currentMonth of
                 Just day ->
-                    ( {m|currentMonth=(nextMonth day |> Debug.log "next month" |> Just) }
+                    ( updateMonth m <| nextMonth day
                     , Cmd.none)
                 Nothing -> (m, Cmd.none)
 
         Prev ->
             case m.currentMonth of
                 Just day ->
-                    ( {m|currentMonth=(prevMonth day |> Debug.log "next month" |> Just) }
+                    ( updateMonth m <| prevMonth day
                     , Cmd.none)
                 Nothing -> (m, Cmd.none)
 
+updateMonth : Model -> Date.Date -> Model
+updateMonth m first_day =
+    Debug.log "updateMonth!" {m| currentMonth = Just first_day, startDay=Just <| getStartDay first_day}
+
+
+createDayList : Date.Date -> List Date.Date
+createDayList first_day =
+    List.foldr (\d acc -> plusDay first_day d :: acc) [] (List.range 0 34)
+
+createCalendar : List Date.Date -> Html Msg
+createCalendar date_list =
+    List.foldr createCalendarInner [] date_list |> List.map createCalendarRow |> table []
+
+
+
+createCalendarRow : List Date.Date -> Html Msg
+createCalendarRow ds =
+    List.map (\d -> td [] [text <| dayToString d]) ds |> tr []
+
+createCalendarInner : Date.Date ->  List (List Date.Date) ->   List (List Date.Date)
+createCalendarInner d acc =
+    case acc of
+        [] ->
+            [[d]]
+        ac::acs ->
+            case Date.dayOfWeek d of
+                Date.Sat ->
+                    [d]::(ac::acs)
+                _ ->
+                    (d::ac)::acs
+
 
 view m =
-    div [] [ text "aa"
-           , button [onClick Prev] [text "前"]
-           , button [onClick Next] [text "次"]
-           ]
+    let
+        calendar_elm =
+            case m.startDay of
+                Just day -> [createDayList day |> createCalendar]
+                Nothing -> []
+    in
+        div [] <| [ text "aa"
+                  , button [onClick Prev] [text "前"]
+                  , button [onClick Next] [text "次"]
+                  ] ++ calendar_elm
 
 subscriptions : Model -> Sub Msg
 subscriptions m = Sub.none
@@ -104,3 +142,45 @@ nextMonth d =
 prevMonth : Date.Date -> Date.Date
 prevMonth d =
     minusDay d 1 |> toFirstDay
+
+
+weekToNum : Date.Day -> Int
+weekToNum w =
+    case w of
+        Date.Sun -> 0
+        Date.Mon -> 1
+        Date.Tue -> 2
+        Date.Wed -> 3
+        Date.Thu -> 4
+        Date.Fri -> 5
+        Date.Sat -> 6
+
+getStartDay : Date.Date -> Date.Date
+getStartDay first_day =
+    let
+        week_num = Date.dayOfWeek first_day |> weekToNum
+    in
+        minusDay first_day week_num
+
+
+dayToString : Date.Date -> String
+dayToString d =
+    let
+        month_int =
+            case Date.month d of
+                Date.Jan -> 1
+                Date.Feb -> 2
+                Date.Mar -> 3
+                Date.Apr -> 4
+                Date.May -> 5
+                Date.Jun -> 6
+                Date.Jul -> 7
+                Date.Aug -> 8
+                Date.Sep -> 9
+                Date.Oct -> 10
+                Date.Nov -> 11
+                Date.Dec -> 12
+    in
+        (toString <| Date.year d) ++ "年" ++ (toString <| month_int) ++ "月" ++ (toString <| Date.day d) ++ "日"
+
+
