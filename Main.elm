@@ -73,6 +73,10 @@ createCalendarInner d acc =
 
 view m =
     let
+        current_month =
+            case m.currentMonth of
+                Nothing -> ""
+                Just day -> Date.month day |> toString
         calendar_elm =
             case m.currentMonth of
                 Nothing -> []
@@ -83,7 +87,7 @@ view m =
                     in createDayList start_day last_day [] |> createCalendar |> List.singleton
 
     in
-        div [] <| [ text "aa"
+        div [] <| [ text current_month
                   , button [onClick Prev] [text "前"]
                   , button [onClick Next] [text "次"]
                   ] ++ calendar_elm
