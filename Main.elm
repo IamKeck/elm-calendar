@@ -48,32 +48,30 @@ createDayList start_day current_day acc =
         current_day :: acc |> createDayList start_day (MyDate.minusDay current_day 1)
 
 
-createCalendar : Model -> List Date.Date -> Html Msg
-createCalendar m date_list =
+createCalendar : Date.Month  -> List Date.Date -> Html Msg
+createCalendar mon date_list =
     let
         head =
             List.map (\w -> text w |> List.singleton |> td [] ) ["日", "月", "火", "水", "木", "金", "土"]
             |> tr [] |> List.singleton |> thead []
-        body = List.foldr createCalendarInner [] date_list |> List.map (createCalendarRow m) |> tbody []
+        body = List.foldr createCalendarInner [] date_list |> List.map (createCalendarRow mon) |> tbody []
     in
         table [] [head, body]
 
 
-
-createCalendarRow : Model -> List Date.Date -> Html Msg
-createCalendarRow m ds =
+createCalendarRow : Date.Month -> List Date.Date -> Html Msg
+createCalendarRow mon ds =
     let
         create_cell =
             \d ->
                 let
                     is_out_month =
-                        case m.currentMonth of
-                            Nothing -> True
-                            Just cd -> Date.month cd /= Date.month d
+                        mon /= Date.month d
                 in
                     td [classList [("out", is_out_month)]] [Date.day d |> toString |> text]
     in
         List.map create_cell ds |> tr []
+
 
 createCalendarInner : Date.Date ->  List (List Date.Date) ->   List (List Date.Date)
 createCalendarInner d acc =
@@ -92,8 +90,8 @@ view m =
     let
         current_month =
             case m.currentMonth of
-                Nothing -> ""
-                Just day -> Date.month day |> toString
+                Nothing -> Date.Jan
+                Just day -> Date.month day
         calendar_elm =
             case m.currentMonth of
                 Nothing -> []
@@ -101,10 +99,10 @@ view m =
                     let
                         start_day = MyDate.getStartDay day
                         last_day = MyDate.toLastDay day |>  MyDate.getEndDay
-                    in createDayList start_day last_day [] |> createCalendar m |> List.singleton
+                    in createDayList start_day last_day [] |> createCalendar current_month |> List.singleton
 
     in
-        div [] <| [ text current_month
+        div [] <| [ toString current_month |> text
                   , button [onClick Prev] [text "前"]
                   , button [onClick Next] [text "次"]
                   ] ++ calendar_elm
