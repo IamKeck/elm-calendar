@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>Calendar</title>
+    <style>
+        thead {
+            font-weight: 600;
+        }
+        thead td:first-child {
+            color: red;
+        }
+        thead td:last-child {
+            color: gray;
+        }
+        thead {
+            border-bottom: double 2px black;
+        }
+        td {
+            width : 50px;
+            text-align: center;
+        }
+        .out{
+            color:gray;
+        }
+    </style>
+</head>
+<body>
+    <div id="main"></div>
+
+    <script src="main.js"></script>
+    <script>
+        const main = document.getElementById("main");
+        Elm.Main.embed(main);
+    </script>
+</body>
+</html>
