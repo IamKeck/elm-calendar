@@ -3,14 +3,13 @@ import Date
 import Time
 
 
-minusDay : Date.Date -> Int -> Date.Date
-minusDay date day =
-    (Date.toTime date) - (Time.hour * 24 * (toFloat day)) |> Date.fromTime
-
-
 plusDay : Date.Date -> Int -> Date.Date
 plusDay date day =
     (Date.toTime date) + (Time.hour * 24 * (toFloat day)) |> Date.fromTime
+
+minusDay : Date.Date -> Int -> Date.Date
+minusDay date day =
+    plusDay date (day * -1)
 
 
 toFirstDay : Date.Date -> Date.Date
