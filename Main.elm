@@ -40,9 +40,13 @@ updateMonth m first_day =
     Debug.log "updateMonth!" {m| currentMonth = Just first_day}
 
 
-createDayList : Date.Date -> List Date.Date
-createDayList first_day =
-    List.foldr (\d acc -> MyDate.plusDay first_day d :: acc) [] (List.range 0 34)
+createDayList : Date.Date -> Date.Date -> List Date.Date -> List Date.Date
+createDayList start_day current_day acc =
+    if current_day == start_day then
+        start_day :: acc
+    else
+        current_day :: acc |> createDayList start_day (MyDate.minusDay current_day 1)
+
 
 createCalendar : List Date.Date -> Html Msg
 createCalendar date_list =
@@ -72,7 +76,11 @@ view m =
         calendar_elm =
             case m.currentMonth of
                 Nothing -> []
-                Just day -> [MyDate.getStartDay day |> createDayList |> createCalendar]
+                Just day ->
+                    let
+                        start_day = MyDate.getStartDay day
+                        last_day = MyDate.toLastDay day |>  MyDate.getEndDay
+                    in createDayList start_day last_day [] |> createCalendar |> List.singleton
 
     in
         div [] <| [ text "aa"
