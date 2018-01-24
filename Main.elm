@@ -48,15 +48,32 @@ createDayList start_day current_day acc =
         current_day :: acc |> createDayList start_day (MyDate.minusDay current_day 1)
 
 
-createCalendar : List Date.Date -> Html Msg
-createCalendar date_list =
-    List.foldr createCalendarInner [] date_list |> List.map createCalendarRow |> table []
+createCalendar : Model -> List Date.Date -> Html Msg
+createCalendar m date_list =
+    let
+        head =
+            List.map (\w -> text w |> List.singleton |> td [] ) ["日", "月", "火", "水", "木", "金", "土"]
+            |> tr [] |> List.singleton |> thead []
+        body = List.foldr createCalendarInner [] date_list |> List.map (createCalendarRow m) |> tbody []
+    in
+        table [] [head, body]
 
 
 
-createCalendarRow : List Date.Date -> Html Msg
-createCalendarRow ds =
-    List.map (\d -> td [] [text <| MyDate.dayToString d]) ds |> tr []
+createCalendarRow : Model -> List Date.Date -> Html Msg
+createCalendarRow m ds =
+    let
+        create_cell =
+            \d ->
+                let
+                    is_out_month =
+                        case m.currentMonth of
+                            Nothing -> True
+                            Just cd -> Date.month cd /= Date.month d
+                in
+                    td [classList [("out", is_out_month)]] [Date.day d |> toString |> text]
+    in
+        List.map create_cell ds |> tr []
 
 createCalendarInner : Date.Date ->  List (List Date.Date) ->   List (List Date.Date)
 createCalendarInner d acc =
@@ -84,7 +101,7 @@ view m =
                     let
                         start_day = MyDate.getStartDay day
                         last_day = MyDate.toLastDay day |>  MyDate.getEndDay
-                    in createDayList start_day last_day [] |> createCalendar |> List.singleton
+                    in createDayList start_day last_day [] |> createCalendar m |> List.singleton
 
     in
         div [] <| [ text current_month
