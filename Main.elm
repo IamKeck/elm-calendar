@@ -9,11 +9,11 @@ import Time
 import List
 import MyDate
 
-type alias Model = {currentMonth : Maybe Date.Date}
-type Msg = Today Date.Date | Next | Prev
+type alias Model = {currentMonth : Maybe Date.Date, clickedDate : Maybe Date.Date}
+type Msg = Today Date.Date | Next | Prev | DateClicked Date.Date
 
 initial : ( Model, Cmd Msg )
-initial = {currentMonth=Nothing} ! [Task.perform Today Date.now]
+initial = {currentMonth=Nothing, clickedDate=Nothing} ! [Task.perform Today Date.now]
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg m =
@@ -35,6 +35,10 @@ update msg m =
                     , Cmd.none)
                 Nothing -> (m, Cmd.none)
 
+        DateClicked d ->
+            {m| clickedDate=Just d} ! []
+
+
 updateMonth : Model -> Date.Date -> Model
 updateMonth m first_day =
     Debug.log "updateMonth!" {m| currentMonth = Just first_day}
@@ -48,19 +52,19 @@ createDayList start_day current_day acc =
         current_day :: acc |> createDayList start_day (MyDate.minusDay current_day 1)
 
 
-createCalendar : Date.Month  -> List Date.Date -> Html Msg
-createCalendar mon date_list =
+createCalendar : Date.Month -> Maybe Date.Date -> List Date.Date -> Html Msg
+createCalendar mon clicked_date date_list =
     let
         head =
             List.map (\w -> text w |> List.singleton |> td [] ) ["日", "月", "火", "水", "木", "金", "土"]
             |> tr [] |> List.singleton |> thead []
-        body = List.foldr createCalendarInner [] date_list |> List.map (createCalendarRow mon) |> tbody []
+        body = List.foldr createCalendarInner [] date_list |> List.map (createCalendarRow mon clicked_date) |> tbody []
     in
         table [] [head, body]
 
 
-createCalendarRow : Date.Month -> List Date.Date -> Html Msg
-createCalendarRow mon ds =
+createCalendarRow : Date.Month -> Maybe Date.Date -> List Date.Date -> Html Msg
+createCalendarRow mon clicked_date ds =
     let
         create_cell =
             \d ->
@@ -68,7 +72,11 @@ createCalendarRow mon ds =
                     is_out_month =
                         mon /= Date.month d
                 in
-                    td [classList [("out", is_out_month)]] [Date.day d |> toString |> text]
+                    td [ classList [ ("out", is_out_month)
+                                   , ("clicked_date", clicked_date == Just d)]
+
+                        , onClick (DateClicked d)]
+                       [Date.day d |> toString |> text]
     in
         List.map create_cell ds |> tr []
 
@@ -99,7 +107,8 @@ view m =
                     let
                         start_day = MyDate.getStartDay day
                         last_day = MyDate.toLastDay day |>  MyDate.getEndDay
-                    in createDayList start_day last_day [] |> createCalendar current_month |> List.singleton
+                    in createDayList start_day last_day [] |> createCalendar current_month m.clickedDate
+                       |> List.singleton
 
     in
         div [] <| [ toString current_month |> text
