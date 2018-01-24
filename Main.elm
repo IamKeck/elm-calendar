@@ -8,11 +8,11 @@ import Debug
 import Time
 import List
 
-type alias Model = {currentMonth : Maybe Date.Date, startDay: Maybe Date.Date}
+type alias Model = {currentMonth : Maybe Date.Date}
 type Msg = Today Date.Date | Next | Prev
 
 initial : ( Model, Cmd Msg )
-initial = {currentMonth=Nothing, startDay=Nothing} ! [Task.perform Today Date.now]
+initial = {currentMonth=Nothing} ! [Task.perform Today Date.now]
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg m =
@@ -36,7 +36,7 @@ update msg m =
 
 updateMonth : Model -> Date.Date -> Model
 updateMonth m first_day =
-    Debug.log "updateMonth!" {m| currentMonth = Just first_day, startDay=Just <| getStartDay first_day}
+    Debug.log "updateMonth!" {m| currentMonth = Just first_day}
 
 
 createDayList : Date.Date -> List Date.Date
@@ -69,9 +69,10 @@ createCalendarInner d acc =
 view m =
     let
         calendar_elm =
-            case m.startDay of
-                Just day -> [createDayList day |> createCalendar]
+            case m.currentMonth of
                 Nothing -> []
+                Just day -> [getStartDay day |> createDayList |> createCalendar]
+
     in
         div [] <| [ text "aa"
                   , button [onClick Prev] [text "前"]
