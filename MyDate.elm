@@ -16,6 +16,16 @@ toFirstDay : Date.Date -> Date.Date
 toFirstDay d =
     minusDay d (Date.day d - 1)
 
+
+toLastDay : Date.Date -> Date.Date
+toLastDay d =
+    let
+        days_of_month = getDaysOfMonth d
+        today = (Date.day d)
+    in
+        days_of_month - today |> plusDay d
+
+
 isUru : Int -> Bool
 isUru year =
     if rem year 400 == 0 then
@@ -72,6 +82,15 @@ getStartDay first_day =
         week_num = Date.dayOfWeek first_day |> weekToNum
     in
         minusDay first_day week_num
+
+
+getEndDay : Date.Date -> Date.Date
+getEndDay last_day =
+    let
+        week_num = Date.dayOfWeek last_day |> weekToNum
+        days_to_add = weekToNum Date.Sat - week_num
+    in
+        days_to_add |> plusDay last_day
 
 
 dayToString : Date.Date -> String
